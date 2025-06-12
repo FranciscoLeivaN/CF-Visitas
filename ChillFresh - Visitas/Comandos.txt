@@ -1,0 +1,161 @@
+// Primer paso - Crear carpeta llamada backend //
+mkdir backend
+cd backend
+npm init -y
+
+// Crea un servidor Express básico con Vite y CORS configurado
+npm install express cors body-parser
+npm install --save-dev nodemon
+
+// Segundo paso - Crea server.js con este contenido //
+
+// Inicio de contenido //
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+
+const app = express();
+const PORT = 5000;
+
+app.use(cors());
+app.use(bodyParser.json());
+
+app.get('/api', (req, res) => {
+  res.json({ message: 'Hello from Node.js backend!' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+// Fin del contenido //
+
+// Tercera parte - Modifica package.json para usar ES modules //
+
+// Inicio del contenido //
+{
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  }
+}
+// Fin del contenido //
+
+// Cuarta parte - Configurar el frontend con Vite (React) //
+cd ..
+npm create vite@latest frontend -- --template react --yes
+
+// Quinta parte - Ingresar a nueva carpeta de frontend y ejecutar npm install //
+cd frontend
+npm install
+
+// Sexta parte - Configura vite.config.js para proxy al backend //
+
+// Modifica vite.config.js: //
+
+// Inicio del contenido //
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  }
+})
+// Fin del contenido //
+
+// Septima parte - Crear conexión frontend-backend //
+
+// Crea un servicio API para llamar al backend desde React //
+export const fetchData = async () => {
+  const response = await fetch('/api');
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
+  }
+  return response.json();
+};
+// Fin de creación de servicio //
+
+// Octava parte - Modifica src/App.jsx para probar la conexión //
+
+// Inicio de contenido //
+import { useEffect, useState } from 'react';
+import { fetchData } from './api';
+import './App.css';
+
+function App() {
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    fetchData()
+      .then(data => setMessage(data.message))
+      .catch(error => console.error('Error:', error));
+  }, []);
+
+  return (
+    <div className="App">
+      <h1>Fullstack Vite + React + Node.js</h1>
+      <p>Backend dice: {message}</p>
+    </div>
+  );
+}
+
+export default App;
+// Fin de contenido //
+
+// Noveno paso - Configuraciones de proyecto //
+Configurar scripts para desarrollo simultáneo
+En la raíz del proyecto, crea package.json
+
+npm init -y
+
+// Decimo paso - scripts para ejecutar front y back juntos //
+// Crea scripts para ejecutar frontend y backend juntos
+Modifica el package.json en la raíz:
+{
+  "name": "ChillFresh - Visitas",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "npm run dev --prefix backend",
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "build": "npm run build --prefix frontend",
+    "preview": "npm run preview --prefix frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.1"
+  }
+}
+// Onceavo paso - Revisión de documentos y eliminación de errores y duplicados //
+
+// Doseavo paso - Instalación de raiz y ejecución de proyecto //
+Instala concurrentemente en la raíz:
+
+npm install --save-dev concurrently
+npm run dev
+
+
+// Estructura final esperada //
+ChillFresh - Visitas/
+├── backend/
+│   ├── node_modules/
+│   ├── server.js
+│   ├── package.json
+│   └── package-lock.json
+├── frontend/
+│   ├── node_modules/
+│   ├── src/
+│   │   ├── api.js
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── public/
+│   ├── vite.config.js
+│   ├── package.json
+│   └── package-lock.json
+└── package.json
