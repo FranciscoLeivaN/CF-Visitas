@@ -1,28 +1,11 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './components/Login';
 import Home from './components/Home';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './utils/AuthContext';
 import './App.css';
 
-/**
- * Componente ProtectedRoute - Protege rutas que requieren autenticación
- * 
- * Este componente verifica si el usuario está autenticado antes de permitir
- * el acceso a una ruta. Si no está autenticado, redirige al login.
- * 
- * @param {Object} props - Propiedades del componente
- * @param {JSX.Element} props.children - Componentes hijos a renderizar si la ruta está protegida
- * @returns {JSX.Element} El componente hijo o una redirección
- */
-const ProtectedRoute = ({ children }) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  
-  if (!isLoggedIn) {
-    return <Navigate to="/" replace />;
-  }
-  
-  return children;
-};
+// El componente ProtectedRoute ahora está en su propio archivo
 
 /**
  * Componente principal de la aplicación
@@ -32,50 +15,32 @@ const ProtectedRoute = ({ children }) => {
  * @returns {JSX.Element} Componente principal con enrutamiento
  */
 function App() {
-  // Estado para controlar si el usuario está logueado
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  
-  useEffect(() => {
-    // Verifica si el usuario está logueado al cargar la aplicación
-    const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    setIsLoggedIn(loggedIn);
-    
-    // Agregar un listener para cambios en el localStorage
-    // Esto permite sincronizar el estado entre pestañas/ventanas
-    const handleStorageChange = () => {
-      const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
-      setIsLoggedIn(loggedIn);
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Limpieza del efecto para evitar memory leaks
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
+  // Ya no necesitamos manejar el estado de autenticación aquí
+  // El contexto AuthContext se encarga de esto
   
   return (
     <Router>
-      <div className="App">
-        <Routes>
-          {/* Ruta raíz: muestra login o redirige a home según el estado de autenticación */}
-          <Route path="/" element={isLoggedIn ? <Navigate to="/home" /> : <Login />} />
-          
-          {/* Ruta protegida: solo accesible si el usuario está autenticado */}
-          <Route 
-            path="/home" 
-            element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Redirige cualquier ruta no definida al inicio */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </div>
+      <AuthProvider>
+        <div className="App">
+          <Routes>
+            {/* Ruta raíz: muestra siempre el login */}
+            <Route path="/" element={<Login />} />
+            
+            {/* Ruta protegida: solo accesible si el usuario está autenticado con JWT válido */}
+            <Route 
+              path="/home" 
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Redirige cualquier ruta no definida al inicio */}
+            <Route path="*" element={<Login />} />
+          </Routes>
+        </div>
+      </AuthProvider>
     </Router>
   );
 }
