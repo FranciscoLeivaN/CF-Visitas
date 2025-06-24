@@ -28,11 +28,11 @@ router.get('/:id', async (req, res) => {
   try {
     const cultivoId = parseInt(req.params.id);
     const cultivo = await cultivoModel.getCultivoById(cultivoId);
-    
+
     if (!cultivo) {
       return res.status(404).json({ error: 'Cultivo no encontrado' });
     }
-    
+
     res.json(cultivo);
   } catch (error) {
     console.error('Error al obtener cultivo:', error);
@@ -47,20 +47,20 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { nombre, descripcion } = req.body;
-    
+
     if (!nombre) {
       return res.status(400).json({ error: 'Nombre es requerido' });
     }
-    
+
     const result = await cultivoModel.createCultivo({
       nombre,
-      descripcion: descripcion || null
+      descripcion: descripcion || null,
     });
-    
+
     res.status(201).json({
       success: true,
       id: result.cultivo_id,
-      message: 'Cultivo creado correctamente'
+      message: 'Cultivo creado correctamente',
     });
   } catch (error) {
     console.error('Error al crear cultivo:', error);
@@ -76,20 +76,20 @@ router.put('/:id', async (req, res) => {
   try {
     const cultivoId = parseInt(req.params.id);
     const { nombre, descripcion } = req.body;
-    
+
     const cultivo = await cultivoModel.getCultivoById(cultivoId);
     if (!cultivo) {
       return res.status(404).json({ error: 'Cultivo no encontrado' });
     }
-    
+
     await cultivoModel.updateCultivo(cultivoId, {
       nombre: nombre || cultivo.nombre,
-      descripcion: descripcion !== undefined ? descripcion : cultivo.descripcion
+      descripcion: descripcion !== undefined ? descripcion : cultivo.descripcion,
     });
-    
+
     res.json({
       success: true,
-      message: 'Cultivo actualizado correctamente'
+      message: 'Cultivo actualizado correctamente',
     });
   } catch (error) {
     console.error('Error al actualizar cultivo:', error);
@@ -104,17 +104,17 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const cultivoId = parseInt(req.params.id);
-    
+
     const cultivo = await cultivoModel.getCultivoById(cultivoId);
     if (!cultivo) {
       return res.status(404).json({ error: 'Cultivo no encontrado' });
     }
-    
+
     await cultivoModel.deleteCultivo(cultivoId);
-    
+
     res.json({
       success: true,
-      message: 'Cultivo eliminado correctamente'
+      message: 'Cultivo eliminado correctamente',
     });
   } catch (error) {
     console.error('Error al eliminar cultivo:', error);

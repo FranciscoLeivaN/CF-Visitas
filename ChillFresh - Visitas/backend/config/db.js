@@ -16,13 +16,13 @@ const dbConfig = {
   options: {
     encrypt: false, // Para conexiones locales
     trustServerCertificate: true, // Para desarrollo local
-    enableArithAbort: true // Necesario para SQL Server
+    enableArithAbort: true, // Necesario para SQL Server
   },
   pool: {
     max: 10,
     min: 0,
-    idleTimeoutMillis: 30000
-  }
+    idleTimeoutMillis: 30000,
+  },
 };
 
 /**
@@ -50,12 +50,12 @@ export const executeQuery = async (query, params = {}) => {
   try {
     const pool = await getConnection();
     const request = pool.request();
-    
+
     // Agregamos cada parámetro a la consulta
     Object.keys(params).forEach(key => {
       request.input(key, params[key]);
     });
-    
+
     const result = await request.query(query);
     return result;
   } catch (error) {
@@ -66,5 +66,5 @@ export const executeQuery = async (query, params = {}) => {
 
 export default {
   getConnection,
-  executeQuery
+  executeQuery,
 };

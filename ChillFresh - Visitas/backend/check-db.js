@@ -10,7 +10,7 @@ async function checkDatabase() {
     console.log('Intentando conectar a la base de datos...');
     const pool = await getConnection();
     console.log('Conexión exitosa a la base de datos!');
-    
+
     // Consulta las tablas existentes
     const result = await pool.request().query(`
       SELECT 
@@ -26,7 +26,7 @@ async function checkDatabase() {
       ORDER BY 
         t.name, c.column_id
     `);
-    
+
     const tables = {};
     result.recordset.forEach(row => {
       if (!tables[row.TableName]) {
@@ -36,13 +36,13 @@ async function checkDatabase() {
         column: row.ColumnName,
         dataType: row.DataType,
         maxLength: row.MaxLength,
-        isNullable: row.IsNullable
+        isNullable: row.IsNullable,
       });
     });
-    
+
     console.log('Tablas encontradas en la base de datos:');
     console.log(JSON.stringify(tables, null, 2));
-    
+
     // Cerrar la conexión
     await pool.close();
     console.log('Conexión cerrada.');

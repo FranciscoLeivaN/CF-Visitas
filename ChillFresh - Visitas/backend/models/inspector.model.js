@@ -18,7 +18,7 @@ export const getAllInspectores = async () => {
  * @param {number} id - ID del inspector
  * @returns {Promise<Object>} Datos del inspector
  */
-export const getInspectorById = async (id) => {
+export const getInspectorById = async id => {
   const query = 'SELECT * FROM Inspectores WHERE inspector_id = @id';
   const result = await executeQuery(query, { id });
   return result.recordset[0];
@@ -29,7 +29,7 @@ export const getInspectorById = async (id) => {
  * @param {Object} inspectorData - Datos del nuevo inspector
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const createInspector = async (inspectorData) => {
+export const createInspector = async inspectorData => {
   const { nombre, email } = inspectorData;
   const query = `
     INSERT INTO Inspectores (nombre, email, activo, fecha_creacion)
@@ -64,7 +64,7 @@ export const updateInspector = async (id, inspectorData) => {
  * @param {number} id - ID del inspector a eliminar
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const deleteInspector = async (id) => {
+export const deleteInspector = async id => {
   const query = 'DELETE FROM Inspectores WHERE inspector_id = @id';
   const result = await executeQuery(query, { id });
   return result;
@@ -75,5 +75,5 @@ export default {
   getInspectorById,
   createInspector,
   updateInspector,
-  deleteInspector
+  deleteInspector,
 };

@@ -19,7 +19,7 @@ export const getAllProductores = async () => {
  * @param {number} id - ID del productor
  * @returns {Promise<Object>} Datos del productor
  */
-export const getProductorById = async (id) => {
+export const getProductorById = async id => {
   const query = 'SELECT * FROM Productores WHERE productor_id = @id';
   const result = await executeQuery(query, { id });
   return result.recordset[0];
@@ -30,20 +30,20 @@ export const getProductorById = async (id) => {
  * @param {Object} productorData - Datos del nuevo productor
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const createProductor = async (productorData) => {
+export const createProductor = async productorData => {
   const { codigo, nombre, ubicacion, email1, email2, email3 } = productorData;
   const query = `
     INSERT INTO Productores (codigo, nombre, ubicacion, email1, email2, email3, fecha_creacion)
     VALUES (@codigo, @nombre, @ubicacion, @email1, @email2, @email3, GETDATE());
     SELECT SCOPE_IDENTITY() AS productor_id;
   `;
-  const result = await executeQuery(query, { 
-    codigo, 
-    nombre, 
-    ubicacion, 
-    email1, 
-    email2, 
-    email3 
+  const result = await executeQuery(query, {
+    codigo,
+    nombre,
+    ubicacion,
+    email1,
+    email2,
+    email3,
   });
   return result.recordset[0];
 };
@@ -67,14 +67,14 @@ export const updateProductor = async (id, productorData) => {
         fecha_actualizacion = GETDATE()
     WHERE productor_id = @id;
   `;
-  const result = await executeQuery(query, { 
-    id, 
+  const result = await executeQuery(query, {
+    id,
     codigo,
-    nombre, 
-    ubicacion, 
-    email1, 
-    email2, 
-    email3 
+    nombre,
+    ubicacion,
+    email1,
+    email2,
+    email3,
   });
   return result;
 };
@@ -84,7 +84,7 @@ export const updateProductor = async (id, productorData) => {
  * @param {number} id - ID del productor a eliminar
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const deleteProductor = async (id) => {
+export const deleteProductor = async id => {
   const query = 'DELETE FROM Productores WHERE productor_id = @id';
   const result = await executeQuery(query, { id });
   return result;
@@ -95,5 +95,5 @@ export default {
   getProductorById,
   createProductor,
   updateProductor,
-  deleteProductor
+  deleteProductor,
 };

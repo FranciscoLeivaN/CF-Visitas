@@ -42,10 +42,10 @@ getConnection()
 
 // Rutas base
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'API de ChillFresh - Gestión de Visitas',
     version: '1.0.0',
-    date: new Date().toISOString()
+    date: new Date().toISOString(),
   });
 });
 
@@ -63,7 +63,7 @@ app.use((err, req, res, next) => {
   console.error('Error en el servidor:', err);
   res.status(500).json({
     error: 'Error interno del servidor',
-    details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    details: process.env.NODE_ENV === 'development' ? err.message : undefined,
   });
 });
 

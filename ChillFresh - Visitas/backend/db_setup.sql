@@ -11,6 +11,41 @@ GO
 USE ChillFresh;
 GO
 
+-- Tabla de Roles
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Roles')
+BEGIN
+    CREATE TABLE Roles (
+        role_id INT IDENTITY(1,1) PRIMARY KEY,
+        nombre NVARCHAR(50) NOT NULL UNIQUE,
+        descripcion NVARCHAR(200),
+        fechaCreacion DATETIME DEFAULT GETDATE(),
+        activo BIT DEFAULT 1
+    );
+END
+GO
+
+-- Insertar roles predeterminados
+IF NOT EXISTS (SELECT * FROM Roles WHERE nombre = 'Admin')
+BEGIN
+    INSERT INTO Roles (nombre, descripcion)
+    VALUES ('Admin', 'Administrador del sistema con acceso completo');
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM Roles WHERE nombre = 'Inspector')
+BEGIN
+    INSERT INTO Roles (nombre, descripcion)
+    VALUES ('Inspector', 'Usuario que puede realizar y documentar visitas');
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM Roles WHERE nombre = 'Usuario')
+BEGIN
+    INSERT INTO Roles (nombre, descripcion)
+    VALUES ('Usuario', 'Usuario regular del sistema con acceso limitado');
+END
+GO
+
 -- Tabla de Usuarios
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Usuarios')
 BEGIN
@@ -20,7 +55,9 @@ BEGIN
         email NVARCHAR(100) NOT NULL UNIQUE,
         password NVARCHAR(100) NOT NULL,
         rol NVARCHAR(20) NOT NULL DEFAULT 'usuario',
-        fechaCreacion DATETIME DEFAULT GETDATE()
+        role_id INT,
+        fechaCreacion DATETIME DEFAULT GETDATE(),
+        CONSTRAINT FK_Usuarios_Roles FOREIGN KEY (role_id) REFERENCES Roles(role_id)
     );
 END
 GO

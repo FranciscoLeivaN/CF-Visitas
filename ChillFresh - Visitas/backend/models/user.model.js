@@ -20,7 +20,7 @@ export const getAllUsers = async () => {
  * @param {string} id - ID del usuario (usuario_id)
  * @returns {Promise<Object>} Datos del usuario
  */
-export const getUserById = async (id) => {
+export const getUserById = async id => {
   const query = 'SELECT * FROM Usuarios WHERE usuario_id = @id';
   const result = await executeQuery(query, { id });
   return result.recordset[0];
@@ -36,14 +36,14 @@ export const validateUser = async (usuarioId, password) => {
   // Primero obtenemos el usuario por su ID
   const query = 'SELECT * FROM Usuarios WHERE usuario_id = @usuarioId';
   const result = await executeQuery(query, { usuarioId });
-  
+
   const user = result.recordset[0];
-  
+
   // Si no existe el usuario, retornamos null
   if (!user) {
     return null;
   }
-    try {
+  try {
     // Verificamos si el usuario tiene saltUsuario para usar Argon2id
     if (user.saltUsuario) {
       // Verificación de contraseña con Argon2id
@@ -51,20 +51,23 @@ export const validateUser = async (usuarioId, password) => {
       return isValid ? user : null;
     } else {
       // Si el usuario no tiene saltUsuario, necesitamos migrar su contraseña
-      console.log(`Usuario ${usuarioId} no tiene saltUsuario, es necesario migrar su contraseña a Argon2id`);
-      
+      console.log(
+        `Usuario ${usuarioId} no tiene saltUsuario, es necesario migrar su contraseña a Argon2id`
+      );
+
       // Verificamos la contraseña en texto plano (formato antiguo)
       // IMPORTANTE: Esta parte solo debe usarse durante la migración
-      const legacyQuery = 'SELECT * FROM Usuarios WHERE usuario_id = @usuarioId AND passUsuario = @password';
+      const legacyQuery =
+        'SELECT * FROM Usuarios WHERE usuario_id = @usuarioId AND passUsuario = @password';
       const legacyResult = await executeQuery(legacyQuery, { usuarioId, password });
-      
+
       if (legacyResult.recordset[0]) {
         // Si la contraseña antigua es válida, aprovechamos para migrar a Argon2id
         try {
           // Generamos nuevo saltUsuario y hash con Argon2id
           const saltUsuario = generateSalt();
           const hashedPassword = await hashPassword(password, saltUsuario);
-          
+
           // Actualizamos el usuario con la nueva contraseña hasheada y el salt
           const updateQuery = `
             UPDATE Usuarios
@@ -72,15 +75,15 @@ export const validateUser = async (usuarioId, password) => {
                 saltUsuario = @saltUsuario
             WHERE usuario_id = @usuarioId;
           `;
-          
-          await executeQuery(updateQuery, { 
-            usuarioId, 
-            hashedPassword, 
-            saltUsuario
+
+          await executeQuery(updateQuery, {
+            usuarioId,
+            hashedPassword,
+            saltUsuario,
           });
-          
+
           console.log(`Contraseña del usuario ${usuarioId} migrada exitosamente a Argon2id`);
-          
+
           // Retornamos el usuario original para permitir el login
           return legacyResult.recordset[0];
         } catch (migrationError) {
@@ -103,23 +106,29 @@ export const validateUser = async (usuarioId, password) => {
  * @param {Object} userData - Datos del nuevo usuario
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const createUser = async (userData) => {
-  const { usuarioId, nombreCompleto, password, telefono } = userData;
-    // Generar un saltUsuario único para este usuario
+export const createUser = async userData => {
+  const { usuarioId, nombreCompleto, password, telefono, role_id } = userData;
+  // Generar un saltUsuario único para este usuario
   const saltUsuario = generateSalt();
-  
+
   // Hash de la contraseña usando Argon2
   const hashedPassword = await hashPassword(password, saltUsuario);
-    const query = `
-    INSERT INTO Usuarios (usuario_id, nombreCompleto, passUsuario, telefono, saltUsuario)
-    VALUES (@usuarioId, @nombreCompleto, @hashedPassword, @telefono, @salt);
+  
+  // Log the role_id value
+  console.log('In createUser model, rol_id:', role_id);
+  
+  const query = `
+    INSERT INTO Usuarios (usuario_id, nombreCompleto, passUsuario, telefono, saltUsuario, rol_id)
+    VALUES (@usuarioId, @nombreCompleto, @hashedPassword, @telefono, @salt, @rolId);
     SELECT @usuarioId AS usuario_id;
-  `;  const result = await executeQuery(query, { 
-    usuarioId, 
-    nombreCompleto, 
-    hashedPassword, 
+  `;
+  const result = await executeQuery(query, {
+    usuarioId,
+    nombreCompleto,
+    hashedPassword,
     telefono,
-    salt: saltUsuario 
+    salt: saltUsuario,
+    rolId: role_id,
   });
   return result.recordset[0];
 };
@@ -131,41 +140,97 @@ export const createUser = async (userData) => {
  * @returns {Promise<Object>} Resultado de la operación
  */
 export const updateUser = async (id, userData) => {
-  const { nombreCompleto, password, telefono } = userData;
+  const { nombreCompleto, password, telefono, role_id, activo } = userData;
   
-  // Si no hay cambio de contraseña, solo actualizamos los otros campos
-  if (!password) {
-    const queryWithoutPassword = `
-      UPDATE Usuarios
-      SET nombreCompleto = @nombreCompleto, 
-          telefono = @telefono
-      WHERE usuario_id = @id;
-    `;
-    return await executeQuery(queryWithoutPassword, { 
-      id, 
-      nombreCompleto, 
-      telefono 
-    });
+  console.log('updateUser - Datos recibidos:', { id, nombreCompleto, telefono, role_id, activo, hasPassword: !!password });
+  
+  try {
+    // Si no hay cambio de contraseña, solo actualizamos los otros campos
+    if (!password) {
+      // Solo incluimos rol_id y activo si están definidos
+      let updateFields = [];
+      let params = {
+        id,
+        nombreCompleto: nombreCompleto || '',
+        telefono: telefono !== undefined ? telefono : null
+      };
+      
+      // Si role_id está definido, añadirlo a la actualización
+      if (role_id !== undefined && role_id !== null) {
+        updateFields.push("rol_id = @rolId");
+        params.rolId = role_id;
+      }
+      
+      // Si activo está definido, añadirlo a la actualización
+      if (activo !== undefined) {
+        updateFields.push("activo = @activo");
+        params.activo = activo;
+      }
+      
+      // Construir la consulta completa
+      let setFields = ["nombreCompleto = @nombreCompleto", "telefono = @telefono"];
+      if (updateFields.length > 0) {
+        setFields = setFields.concat(updateFields);
+      }
+      
+      let fullQuery = `
+        UPDATE Usuarios
+        SET ${setFields.join(', ')}
+        WHERE usuario_id = @id;
+      `;
+      
+      console.log('updateUser - Query sin contraseña:', fullQuery);
+      console.log('updateUser - Parámetros:', params);
+      
+      return await executeQuery(fullQuery, params);
+    } else {
+      // Si hay cambio de contraseña, generamos un nuevo saltUsuario y hash
+      const saltUsuario = generateSalt();
+      const hashedPassword = await hashPassword(password, saltUsuario);
+      
+      // Similar al caso anterior, solo incluimos los campos que estén definidos
+      let updateFields = [
+        "nombreCompleto = @nombreCompleto", 
+        "passUsuario = @hashedPassword",
+        "telefono = @telefono",
+        "saltUsuario = @salt"
+      ];
+      
+      let params = {
+        id,
+        nombreCompleto: nombreCompleto || '',
+        hashedPassword,
+        telefono: telefono !== undefined ? telefono : null,
+        salt: saltUsuario
+      };
+      
+      // Si role_id está definido, añadirlo a la actualización
+      if (role_id !== undefined && role_id !== null) {
+        updateFields.push("rol_id = @rolId");
+        params.rolId = role_id;
+      }
+      
+      // Si activo está definido, añadirlo a la actualización
+      if (activo !== undefined) {
+        updateFields.push("activo = @activo");
+        params.activo = activo;
+      }
+      
+      const query = `
+        UPDATE Usuarios
+        SET ${updateFields.join(', ')}
+        WHERE usuario_id = @id;
+      `;
+      
+      console.log('updateUser - Query con contraseña:', query);
+      console.log('updateUser - Parámetros:', { ...params, hashedPassword: '[PROTECTED]' });
+      
+      return await executeQuery(query, params);
+    }
+  } catch (error) {
+    console.error('Error en updateUser:', error);
+    throw error;
   }
-    // Si hay cambio de contraseña, generamos un nuevo saltUsuario y hash
-  const saltUsuario = generateSalt();
-  const hashedPassword = await hashPassword(password, saltUsuario);
-    const query = `
-    UPDATE Usuarios
-    SET nombreCompleto = @nombreCompleto, 
-        passUsuario = @hashedPassword, 
-        telefono = @telefono,
-        saltUsuario = @salt
-    WHERE usuario_id = @id;
-  `;
-    const result = await executeQuery(query, { 
-    id, 
-    nombreCompleto, 
-    hashedPassword, 
-    telefono,
-    salt: saltUsuario 
-  });
-  return result;
 };
 
 /**
@@ -173,10 +238,20 @@ export const updateUser = async (id, userData) => {
  * @param {string} id - ID del usuario a eliminar
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const deleteUser = async (id) => {
+export const deleteUser = async id => {
   const query = 'DELETE FROM Usuarios WHERE usuario_id = @id';
   const result = await executeQuery(query, { id });
   return result;
+};
+
+/**
+ * Obtiene todos los roles disponibles en el sistema
+ * @returns {Promise<Array>} Lista de roles
+ */
+export const getAllRoles = async () => {
+  const query = 'SELECT * FROM Roles';
+  const result = await executeQuery(query);
+  return result.recordset;
 };
 
 export default {
@@ -185,5 +260,6 @@ export default {
   validateUser,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  getAllRoles,
 };

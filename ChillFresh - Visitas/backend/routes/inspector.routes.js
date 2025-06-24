@@ -28,11 +28,11 @@ router.get('/:id', async (req, res) => {
   try {
     const inspectorId = parseInt(req.params.id);
     const inspector = await inspectorModel.getInspectorById(inspectorId);
-    
+
     if (!inspector) {
       return res.status(404).json({ error: 'Inspector no encontrado' });
     }
-    
+
     res.json(inspector);
   } catch (error) {
     console.error('Error al obtener inspector:', error);
@@ -47,20 +47,20 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { nombre, email } = req.body;
-    
+
     if (!nombre || !email) {
       return res.status(400).json({ error: 'Nombre y email son requeridos' });
     }
-    
+
     const result = await inspectorModel.createInspector({
       nombre,
-      email
+      email,
     });
-    
+
     res.status(201).json({
       success: true,
       id: result.inspector_id,
-      message: 'Inspector creado correctamente'
+      message: 'Inspector creado correctamente',
     });
   } catch (error) {
     console.error('Error al crear inspector:', error);
@@ -76,21 +76,21 @@ router.put('/:id', async (req, res) => {
   try {
     const inspectorId = parseInt(req.params.id);
     const { nombre, email, activo } = req.body;
-    
+
     const inspector = await inspectorModel.getInspectorById(inspectorId);
     if (!inspector) {
       return res.status(404).json({ error: 'Inspector no encontrado' });
     }
-    
+
     await inspectorModel.updateInspector(inspectorId, {
       nombre: nombre || inspector.nombre,
       email: email || inspector.email,
-      activo: activo !== undefined ? activo : inspector.activo
+      activo: activo !== undefined ? activo : inspector.activo,
     });
-    
+
     res.json({
       success: true,
-      message: 'Inspector actualizado correctamente'
+      message: 'Inspector actualizado correctamente',
     });
   } catch (error) {
     console.error('Error al actualizar inspector:', error);
@@ -105,17 +105,17 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const inspectorId = parseInt(req.params.id);
-    
+
     const inspector = await inspectorModel.getInspectorById(inspectorId);
     if (!inspector) {
       return res.status(404).json({ error: 'Inspector no encontrado' });
     }
-    
+
     await inspectorModel.deleteInspector(inspectorId);
-    
+
     res.json({
       success: true,
-      message: 'Inspector eliminado correctamente'
+      message: 'Inspector eliminado correctamente',
     });
   } catch (error) {
     console.error('Error al eliminar inspector:', error);

@@ -33,7 +33,7 @@ export const getAllVisitas = async () => {
  * @param {number} id - ID de la visita
  * @returns {Promise<Object>} Datos de la visita
  */
-export const getVisitaById = async (id) => {
+export const getVisitaById = async id => {
   const query = `
     SELECT 
       v.*,
@@ -58,7 +58,7 @@ export const getVisitaById = async (id) => {
  * @param {number} productorId - ID del productor
  * @returns {Promise<Array>} Lista de visitas del productor
  */
-export const getVisitasByProductor = async (productorId) => {
+export const getVisitasByProductor = async productorId => {
   const query = `
     SELECT 
       v.*,
@@ -85,7 +85,7 @@ export const getVisitasByProductor = async (productorId) => {
  * @param {number} inspectorId - ID del inspector
  * @returns {Promise<Array>} Lista de visitas del inspector
  */
-export const getVisitasByInspector = async (inspectorId) => {
+export const getVisitasByInspector = async inspectorId => {
   const query = `
     SELECT 
       v.*,
@@ -112,16 +112,10 @@ export const getVisitasByInspector = async (inspectorId) => {
  * @param {Object} visitaData - Datos de la nueva visita
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const createVisita = async (visitaData) => {
-  const { 
-    fecha, 
-    productor_id, 
-    cultivo_id, 
-    inspector_id, 
-    observaciones, 
-    recomendaciones 
-  } = visitaData;
-  
+export const createVisita = async visitaData => {
+  const { fecha, productor_id, cultivo_id, inspector_id, observaciones, recomendaciones } =
+    visitaData;
+
   const query = `
     INSERT INTO Visitas (
       fecha, 
@@ -145,16 +139,16 @@ export const createVisita = async (visitaData) => {
     );
     SELECT SCOPE_IDENTITY() AS visita_id;
   `;
-  
-  const result = await executeQuery(query, { 
-    fecha, 
-    productor_id, 
-    cultivo_id, 
-    inspector_id, 
-    observaciones: observaciones || null, 
-    recomendaciones: recomendaciones || null 
+
+  const result = await executeQuery(query, {
+    fecha,
+    productor_id,
+    cultivo_id,
+    inspector_id,
+    observaciones: observaciones || null,
+    recomendaciones: recomendaciones || null,
   });
-  
+
   return result.recordset[0];
 };
 
@@ -165,16 +159,16 @@ export const createVisita = async (visitaData) => {
  * @returns {Promise<Object>} Resultado de la operación
  */
 export const updateVisita = async (id, visitaData) => {
-  const { 
-    fecha, 
-    productor_id, 
-    cultivo_id, 
-    inspector_id, 
-    observaciones, 
+  const {
+    fecha,
+    productor_id,
+    cultivo_id,
+    inspector_id,
+    observaciones,
     recomendaciones,
-    informe_enviado
+    informe_enviado,
   } = visitaData;
-  
+
   const query = `
     UPDATE Visitas
     SET fecha = @fecha,
@@ -187,18 +181,18 @@ export const updateVisita = async (id, visitaData) => {
         fecha_actualizacion = GETDATE()
     WHERE visita_id = @id;
   `;
-  
-  const result = await executeQuery(query, { 
-    id, 
-    fecha, 
-    productor_id, 
-    cultivo_id, 
-    inspector_id, 
-    observaciones, 
+
+  const result = await executeQuery(query, {
+    id,
+    fecha,
+    productor_id,
+    cultivo_id,
+    inspector_id,
+    observaciones,
     recomendaciones,
-    informe_enviado
+    informe_enviado,
   });
-  
+
   return result;
 };
 
@@ -207,7 +201,7 @@ export const updateVisita = async (id, visitaData) => {
  * @param {number} id - ID de la visita
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const marcarVisitaEnviada = async (id) => {
+export const marcarVisitaEnviada = async id => {
   const query = `
     UPDATE Visitas
     SET informe_enviado = 1,
@@ -215,7 +209,7 @@ export const marcarVisitaEnviada = async (id) => {
         fecha_actualizacion = GETDATE()
     WHERE visita_id = @id;
   `;
-  
+
   const result = await executeQuery(query, { id });
   return result;
 };
@@ -225,16 +219,16 @@ export const marcarVisitaEnviada = async (id) => {
  * @param {number} id - ID de la visita a eliminar
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const deleteVisita = async (id) => {
+export const deleteVisita = async id => {
   // Primero eliminar registros relacionados en ArchivosAdjuntos
   await executeQuery('DELETE FROM ArchivosAdjuntos WHERE visita_id = @id', { id });
-  
+
   // Luego eliminar registros relacionados en DestinatariosCorreos
   await executeQuery('DELETE FROM DestinatariosCorreos WHERE visita_id = @id', { id });
-  
+
   // Luego eliminar registros relacionados en HistorialEnvios
   await executeQuery('DELETE FROM HistorialEnvios WHERE visita_id = @id', { id });
-  
+
   // Finalmente eliminar la visita
   const query = 'DELETE FROM Visitas WHERE visita_id = @id';
   const result = await executeQuery(query, { id });
@@ -249,5 +243,5 @@ export default {
   createVisita,
   updateVisita,
   marcarVisitaEnviada,
-  deleteVisita
+  deleteVisita,
 };

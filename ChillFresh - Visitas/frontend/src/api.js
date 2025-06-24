@@ -1,6 +1,6 @@
 /**
  * API.js - Contiene funciones para interactuar con el backend
- * 
+ *
  * Este archivo proporciona funciones para realizar operaciones CRUD con el servidor.
  * Centralizamos todas las llamadas al API en este archivo para mantener la consistencia
  * y facilitar el mantenimiento.
@@ -16,7 +16,7 @@ const TOKEN_KEY = 'chillfresh_auth_token';
  * Guarda el token JWT en localStorage
  * @param {string} token - Token JWT a guardar
  */
-export const setAuthToken = (token) => {
+export const setAuthToken = token => {
   localStorage.setItem(TOKEN_KEY, token);
 };
 
@@ -55,25 +55,43 @@ const fetchWithErrorHandling = async (endpoint, options = {}) => {
     const token = getAuthToken();
     let headers = {
       'Content-Type': 'application/json',
-      ...(options.headers || {})
+      ...(options.headers || {}),
     };
-    
+
     if (token && !endpoint.includes('/login')) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
-      headers
+      headers,
     });
 
-    const data = await response.json();    if (!response.ok) {
+    const data = await response.json();
+    if (!response.ok) {
       // Si recibimos un 401 Unauthorized, limpiamos el token porque podría estar expirado
       if (response.status === 401) {
         removeAuthToken();
       }
-      // Aseguramos que se lance un error con el mensaje exacto del backend
-      throw new Error(data.error || 'Error en la petición');
+      
+      // Crear un error con detalles específicos según el código de estado
+      let errorMessage = data.error || 'Error en la petición';
+      
+      if (response.status === 403) {
+        errorMessage = `403 - Acceso denegado: ${data.message || 'No tiene permisos para realizar esta acción'}`;
+      } else if (response.status === 404) {
+        errorMessage = `404 - No encontrado: ${data.message || 'El recurso solicitado no existe'}`;
+      } else if (response.status === 500) {
+        errorMessage = `500 - Error del servidor: ${data.message || 'Error interno del servidor'}`;
+      }
+      
+      // Crear un error personalizado con propiedades adicionales
+      const customError = new Error(errorMessage);
+      customError.status = response.status;
+      customError.statusText = response.statusText;
+      customError.data = data;
+      
+      throw customError;
     }
 
     return data;
@@ -102,14 +120,22 @@ export const fetchData = async () => {
 export const login = async (usuario_id, password) => {
   const response = await fetchWithErrorHandling('/usuarios/login', {
     method: 'POST',
-    body: JSON.stringify({ usuario_id, password })
+    body: JSON.stringify({ usuario_id, password }),
   });
-  
+
   // Si el login es exitoso, guardamos el token
   if (response.token) {
     setAuthToken(response.token);
+    
+    // Decodificar inmediatamente el token para validar que tiene la información correcta
+    try {
+      const decodedToken = decodeAuthToken();
+      console.log('Token decodificado después de login:', decodedToken);
+    } catch (err) {
+      console.error('Error al decodificar token después de login:', err);
+    }
   }
-  
+
   return response;
 };
 
@@ -126,8 +152,19 @@ export const getUsers = async () => {
  * @param {string} id - ID del usuario
  * @returns {Promise<Object>} Datos del usuario
  */
-export const getUserById = async (id) => {
-  return fetchWithErrorHandling(`/usuarios/${id}`);
+export const getUserById = async id => {
+  console.log('Solicitando datos de usuario con ID:', id);
+  console.log('Token actual:', getAuthToken());
+  console.log('Usuario decodificado:', decodeAuthToken());
+  
+  try {
+    const result = await fetchWithErrorHandling(`/usuarios/${id}`);
+    console.log('Respuesta getUserById:', result);
+    return result;
+  } catch (error) {
+    console.error('Error getUserById:', error);
+    throw error;
+  }
 };
 
 /**
@@ -135,10 +172,10 @@ export const getUserById = async (id) => {
  * @param {Object} userData - Datos del nuevo usuario
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const createUser = async (userData) => {
+export const createUser = async userData => {
   return fetchWithErrorHandling('/usuarios', {
     method: 'POST',
-    body: JSON.stringify(userData)
+    body: JSON.stringify(userData),
   });
 };
 
@@ -151,7 +188,7 @@ export const createUser = async (userData) => {
 export const updateUser = async (id, userData) => {
   return fetchWithErrorHandling(`/usuarios/${id}`, {
     method: 'PUT',
-    body: JSON.stringify(userData)
+    body: JSON.stringify(userData),
   });
 };
 
@@ -160,10 +197,18 @@ export const updateUser = async (id, userData) => {
  * @param {string} id - ID del usuario a eliminar
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const deleteUser = async (id) => {
+export const deleteUser = async id => {
   return fetchWithErrorHandling(`/usuarios/${id}`, {
-    method: 'DELETE'
+    method: 'DELETE',
   });
+};
+
+/**
+ * Obtiene todos los roles disponibles en el sistema
+ * @returns {Promise<Array>} Lista de roles
+ */
+export const getRoles = async () => {
+  return fetchWithErrorHandling('/usuarios/roles');
 };
 
 // *** API DE PRODUCTORES ***
@@ -181,7 +226,7 @@ export const getProductores = async () => {
  * @param {number} id - ID del productor
  * @returns {Promise<Object>} Datos del productor
  */
-export const getProductorById = async (id) => {
+export const getProductorById = async id => {
   return fetchWithErrorHandling(`/productores/${id}`);
 };
 
@@ -190,10 +235,10 @@ export const getProductorById = async (id) => {
  * @param {Object} productorData - Datos del nuevo productor
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const createProductor = async (productorData) => {
+export const createProductor = async productorData => {
   return fetchWithErrorHandling('/productores', {
     method: 'POST',
-    body: JSON.stringify(productorData)
+    body: JSON.stringify(productorData),
   });
 };
 
@@ -206,7 +251,7 @@ export const createProductor = async (productorData) => {
 export const updateProductor = async (id, productorData) => {
   return fetchWithErrorHandling(`/productores/${id}`, {
     method: 'PUT',
-    body: JSON.stringify(productorData)
+    body: JSON.stringify(productorData),
   });
 };
 
@@ -215,9 +260,9 @@ export const updateProductor = async (id, productorData) => {
  * @param {number} id - ID del productor a eliminar
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const deleteProductor = async (id) => {
+export const deleteProductor = async id => {
   return fetchWithErrorHandling(`/productores/${id}`, {
-    method: 'DELETE'
+    method: 'DELETE',
   });
 };
 
@@ -236,7 +281,7 @@ export const getCultivos = async () => {
  * @param {number} id - ID del cultivo
  * @returns {Promise<Object>} Datos del cultivo
  */
-export const getCultivoById = async (id) => {
+export const getCultivoById = async id => {
   return fetchWithErrorHandling(`/cultivos/${id}`);
 };
 
@@ -245,10 +290,10 @@ export const getCultivoById = async (id) => {
  * @param {Object} cultivoData - Datos del nuevo cultivo
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const createCultivo = async (cultivoData) => {
+export const createCultivo = async cultivoData => {
   return fetchWithErrorHandling('/cultivos', {
     method: 'POST',
-    body: JSON.stringify(cultivoData)
+    body: JSON.stringify(cultivoData),
   });
 };
 
@@ -261,7 +306,7 @@ export const createCultivo = async (cultivoData) => {
 export const updateCultivo = async (id, cultivoData) => {
   return fetchWithErrorHandling(`/cultivos/${id}`, {
     method: 'PUT',
-    body: JSON.stringify(cultivoData)
+    body: JSON.stringify(cultivoData),
   });
 };
 
@@ -270,9 +315,9 @@ export const updateCultivo = async (id, cultivoData) => {
  * @param {number} id - ID del cultivo a eliminar
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const deleteCultivo = async (id) => {
+export const deleteCultivo = async id => {
   return fetchWithErrorHandling(`/cultivos/${id}`, {
-    method: 'DELETE'
+    method: 'DELETE',
   });
 };
 
@@ -291,7 +336,7 @@ export const getInspectores = async () => {
  * @param {number} id - ID del inspector
  * @returns {Promise<Object>} Datos del inspector
  */
-export const getInspectorById = async (id) => {
+export const getInspectorById = async id => {
   return fetchWithErrorHandling(`/inspectores/${id}`);
 };
 
@@ -300,10 +345,10 @@ export const getInspectorById = async (id) => {
  * @param {Object} inspectorData - Datos del nuevo inspector
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const createInspector = async (inspectorData) => {
+export const createInspector = async inspectorData => {
   return fetchWithErrorHandling('/inspectores', {
     method: 'POST',
-    body: JSON.stringify(inspectorData)
+    body: JSON.stringify(inspectorData),
   });
 };
 
@@ -316,7 +361,7 @@ export const createInspector = async (inspectorData) => {
 export const updateInspector = async (id, inspectorData) => {
   return fetchWithErrorHandling(`/inspectores/${id}`, {
     method: 'PUT',
-    body: JSON.stringify(inspectorData)
+    body: JSON.stringify(inspectorData),
   });
 };
 
@@ -325,9 +370,9 @@ export const updateInspector = async (id, inspectorData) => {
  * @param {number} id - ID del inspector a eliminar
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const deleteInspector = async (id) => {
+export const deleteInspector = async id => {
   return fetchWithErrorHandling(`/inspectores/${id}`, {
-    method: 'DELETE'
+    method: 'DELETE',
   });
 };
 
@@ -346,7 +391,7 @@ export const getVisitas = async () => {
  * @param {number} id - ID de la visita
  * @returns {Promise<Object>} Datos de la visita
  */
-export const getVisitaById = async (id) => {
+export const getVisitaById = async id => {
   return fetchWithErrorHandling(`/visitas/${id}`);
 };
 
@@ -355,7 +400,7 @@ export const getVisitaById = async (id) => {
  * @param {number} productorId - ID del productor
  * @returns {Promise<Array>} Lista de visitas del productor
  */
-export const getVisitasByProductor = async (productorId) => {
+export const getVisitasByProductor = async productorId => {
   return fetchWithErrorHandling(`/visitas/productor/${productorId}`);
 };
 
@@ -364,7 +409,7 @@ export const getVisitasByProductor = async (productorId) => {
  * @param {number} inspectorId - ID del inspector
  * @returns {Promise<Array>} Lista de visitas del inspector
  */
-export const getVisitasByInspector = async (inspectorId) => {
+export const getVisitasByInspector = async inspectorId => {
   return fetchWithErrorHandling(`/visitas/inspector/${inspectorId}`);
 };
 
@@ -373,10 +418,10 @@ export const getVisitasByInspector = async (inspectorId) => {
  * @param {Object} visitaData - Datos de la nueva visita
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const createVisita = async (visitaData) => {
+export const createVisita = async visitaData => {
   return fetchWithErrorHandling('/visitas', {
     method: 'POST',
-    body: JSON.stringify(visitaData)
+    body: JSON.stringify(visitaData),
   });
 };
 
@@ -389,7 +434,7 @@ export const createVisita = async (visitaData) => {
 export const updateVisita = async (id, visitaData) => {
   return fetchWithErrorHandling(`/visitas/${id}`, {
     method: 'PUT',
-    body: JSON.stringify(visitaData)
+    body: JSON.stringify(visitaData),
   });
 };
 
@@ -398,9 +443,9 @@ export const updateVisita = async (id, visitaData) => {
  * @param {number} id - ID de la visita
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const marcarVisitaEnviada = async (id) => {
+export const marcarVisitaEnviada = async id => {
   return fetchWithErrorHandling(`/visitas/${id}/enviar`, {
-    method: 'PUT'
+    method: 'PUT',
   });
 };
 
@@ -409,9 +454,9 @@ export const marcarVisitaEnviada = async (id) => {
  * @param {number} id - ID de la visita a eliminar
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const deleteVisita = async (id) => {
+export const deleteVisita = async id => {
   return fetchWithErrorHandling(`/visitas/${id}`, {
-    method: 'DELETE'
+    method: 'DELETE',
   });
 };
 
@@ -434,19 +479,20 @@ export const logout = () => {
 export const decodeAuthToken = () => {
   const token = getAuthToken();
   if (!token) return null;
-  
+
   try {
     // Dividir el token y obtener la parte del payload (posición 1)
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     // Decodificar el payload
     const jsonPayload = decodeURIComponent(
-      window.atob(base64)
+      window
+        .atob(base64)
         .split('')
         .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
-    
+
     return JSON.parse(jsonPayload);
   } catch (error) {
     console.error('Error al decodificar token:', error);

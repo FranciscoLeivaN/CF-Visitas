@@ -19,49 +19,62 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = () => {
       const authenticated = checkAuthentication();
       setIsAuthenticated(authenticated);
-      
+
       if (authenticated) {
         const userData = getAuthUser();
         setUser(userData);
       } else {
         setUser(null);
       }
-      
+
       setLoading(false);
     };
-    
+
     checkAuth();
-    
+
     // Configurar un intervalo para verificar la autenticación periódicamente
     // Esto es útil para detectar cuando el token expira
     const interval = setInterval(checkAuth, 60000); // Verificar cada minuto
-    
+
     return () => {
       clearInterval(interval);
     };
   }, []);
-    // Función para iniciar sesión
-  const login = (userData) => {
+  // Función para iniciar sesión
+  const login = userData => {
+    console.log("Login exitoso con datos:", userData);
+    
+    // Asegurarnos de que el rol esté correctamente asignado
+    if (userData && !userData.role) {
+      console.warn("No se encontró información de rol en los datos del usuario");
+      // Usar la función importada en lugar de require
+      const tokenUser = getAuthUser();
+      if (tokenUser && tokenUser.role) {
+        console.log("Se encontró rol en el token:", tokenUser.role);
+        userData = { ...userData, ...tokenUser };
+      }
+    }
+    
     setIsAuthenticated(true);
     setUser(userData);
   };
-  
+
   // Función para cerrar sesión
   const handleLogout = () => {
     logout();
     setIsAuthenticated(false);
     setUser(null);
   };
-  
+
   // Valor del contexto
   const value = {
     isAuthenticated,
     user,
     loading,
     login,
-    logout: handleLogout
+    logout: handleLogout,
   };
-  
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

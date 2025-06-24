@@ -29,11 +29,11 @@ router.get('/:id', async (req, res) => {
   try {
     const visitaId = parseInt(req.params.id);
     const visita = await visitaModel.getVisitaById(visitaId);
-    
+
     if (!visita) {
       return res.status(404).json({ error: 'Visita no encontrada' });
     }
-    
+
     res.json(visita);
   } catch (error) {
     console.error('Error al obtener visita:', error);
@@ -77,34 +77,28 @@ router.get('/inspector/:inspectorId', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { 
-      fecha, 
-      productor_id, 
-      cultivo_id, 
-      inspector_id, 
-      observaciones, 
-      recomendaciones 
-    } = req.body;
-    
+    const { fecha, productor_id, cultivo_id, inspector_id, observaciones, recomendaciones } =
+      req.body;
+
     if (!productor_id || !fecha || !cultivo_id || !inspector_id) {
-      return res.status(400).json({ 
-        error: 'Productor, fecha, cultivo e inspector son campos requeridos' 
+      return res.status(400).json({
+        error: 'Productor, fecha, cultivo e inspector son campos requeridos',
       });
     }
-    
+
     const result = await visitaModel.createVisita({
       fecha,
       productor_id,
       cultivo_id,
       inspector_id,
       observaciones,
-      recomendaciones
+      recomendaciones,
     });
-    
+
     res.status(201).json({
       success: true,
       id: result.visita_id,
-      message: 'Visita creada correctamente'
+      message: 'Visita creada correctamente',
     });
   } catch (error) {
     console.error('Error al crear visita:', error);
@@ -119,21 +113,21 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const visitaId = parseInt(req.params.id);
-    const { 
-      fecha, 
-      productor_id, 
-      cultivo_id, 
-      inspector_id, 
-      observaciones, 
+    const {
+      fecha,
+      productor_id,
+      cultivo_id,
+      inspector_id,
+      observaciones,
       recomendaciones,
-      informe_enviado
+      informe_enviado,
     } = req.body;
-    
+
     const visita = await visitaModel.getVisitaById(visitaId);
     if (!visita) {
       return res.status(404).json({ error: 'Visita no encontrada' });
     }
-    
+
     await visitaModel.updateVisita(visitaId, {
       fecha: fecha || visita.fecha,
       productor_id: productor_id || visita.productor_id,
@@ -141,12 +135,12 @@ router.put('/:id', async (req, res) => {
       inspector_id: inspector_id || visita.inspector_id,
       observaciones: observaciones !== undefined ? observaciones : visita.observaciones,
       recomendaciones: recomendaciones !== undefined ? recomendaciones : visita.recomendaciones,
-      informe_enviado: informe_enviado !== undefined ? informe_enviado : visita.informe_enviado
+      informe_enviado: informe_enviado !== undefined ? informe_enviado : visita.informe_enviado,
     });
-    
+
     res.json({
       success: true,
-      message: 'Visita actualizada correctamente'
+      message: 'Visita actualizada correctamente',
     });
   } catch (error) {
     console.error('Error al actualizar visita:', error);
@@ -161,17 +155,17 @@ router.put('/:id', async (req, res) => {
 router.put('/:id/enviar', async (req, res) => {
   try {
     const visitaId = parseInt(req.params.id);
-    
+
     const visita = await visitaModel.getVisitaById(visitaId);
     if (!visita) {
       return res.status(404).json({ error: 'Visita no encontrada' });
     }
-    
+
     await visitaModel.marcarVisitaEnviada(visitaId);
-    
+
     res.json({
       success: true,
-      message: 'Visita marcada como enviada correctamente'
+      message: 'Visita marcada como enviada correctamente',
     });
   } catch (error) {
     console.error('Error al marcar visita como enviada:', error);
@@ -186,17 +180,17 @@ router.put('/:id/enviar', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const visitaId = parseInt(req.params.id);
-    
+
     const visita = await visitaModel.getVisitaById(visitaId);
     if (!visita) {
       return res.status(404).json({ error: 'Visita no encontrada' });
     }
-    
+
     await visitaModel.deleteVisita(visitaId);
-    
+
     res.json({
       success: true,
-      message: 'Visita eliminada correctamente'
+      message: 'Visita eliminada correctamente',
     });
   } catch (error) {
     console.error('Error al eliminar visita:', error);

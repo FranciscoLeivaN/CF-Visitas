@@ -18,7 +18,7 @@ export const getAllCultivos = async () => {
  * @param {number} id - ID del cultivo
  * @returns {Promise<Object>} Datos del cultivo
  */
-export const getCultivoById = async (id) => {
+export const getCultivoById = async id => {
   const query = 'SELECT * FROM Cultivos WHERE cultivo_id = @id';
   const result = await executeQuery(query, { id });
   return result.recordset[0];
@@ -29,7 +29,7 @@ export const getCultivoById = async (id) => {
  * @param {Object} cultivoData - Datos del nuevo cultivo
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const createCultivo = async (cultivoData) => {
+export const createCultivo = async cultivoData => {
   const { nombre, descripcion } = cultivoData;
   const query = `
     INSERT INTO Cultivos (nombre, descripcion)
@@ -63,7 +63,7 @@ export const updateCultivo = async (id, cultivoData) => {
  * @param {number} id - ID del cultivo a eliminar
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const deleteCultivo = async (id) => {
+export const deleteCultivo = async id => {
   const query = 'DELETE FROM Cultivos WHERE cultivo_id = @id';
   const result = await executeQuery(query, { id });
   return result;
@@ -74,5 +74,5 @@ export default {
   getCultivoById,
   createCultivo,
   updateCultivo,
-  deleteCultivo
+  deleteCultivo,
 };

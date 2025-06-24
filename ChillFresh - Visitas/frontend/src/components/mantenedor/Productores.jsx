@@ -3,9 +3,9 @@ import { getProductores, deleteProductor, createProductor } from '../../api';
 
 /**
  * Componente de Mantenedor de Productores
- * 
+ *
  * Este componente gestiona la visualización, creación, edición y eliminación de productores
- * 
+ *
  * @returns {JSX.Element} Componente de mantenedor de productores
  */
 function Productores() {
@@ -24,9 +24,9 @@ function Productores() {
     ubicacion: '',
     email1: '',
     email2: '',
-    email3: ''
+    email3: '',
   });
-  
+
   // Cargar productores al montar el componente
   useEffect(() => {
     const fetchProductores = async () => {
@@ -42,15 +42,15 @@ function Productores() {
         setLoading(false);
       }
     };
-    
+
     fetchProductores();
   }, []);
-  
+
   /**
    * Maneja la eliminación de un productor
    * @param {number} id - ID del productor a eliminar
    */
-  const handleDelete = async (id) => {
+  const handleDelete = async id => {
     if (window.confirm('¿Está seguro que desea eliminar este productor?')) {
       try {
         await deleteProductor(id);
@@ -67,11 +67,11 @@ function Productores() {
    * Maneja los cambios en los campos del formulario
    * @param {Event} e - Evento del input
    */
-  const handleInputChange = (e) => {
+  const handleInputChange = e => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -85,7 +85,7 @@ function Productores() {
       ubicacion: '',
       email1: '',
       email2: '',
-      email3: ''
+      email3: '',
     });
     setShowModal(true);
   };
@@ -101,7 +101,7 @@ function Productores() {
    * Maneja el envío del formulario para crear un nuevo productor
    * @param {Event} e - Evento del formulario
    */
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     try {
       const newProductor = await createProductor(formData);
@@ -121,26 +121,41 @@ function Productores() {
         En esta sección puede administrar los productores del sistema: crear nuevos registros,
         editar los existentes o eliminarlos.
       </p>
-      
+
       {/* Mostrar mensaje de error si existe */}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
-      
       <div className="flex justify-end mb-4">
-        <button 
-          className="bg-lightgreen hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+        <button
+          className="bg-lightgreen hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline flex items-center transition-all duration-200 transform hover:scale-105"
           onClick={handleOpenModal}
         >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+            />
+          </svg>
           Agregar Productor
         </button>
       </div>
-      
+
       {/* Tabla de productores */}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-gray-200">
+          {' '}
+          <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Código
@@ -161,18 +176,38 @@ function Productores() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
-              <tr>                <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+              <tr>
+                {' '}
+                <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
                   <div className="flex justify-center items-center space-x-2">
-                    <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin h-5 w-5 text-gray-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     <span>Cargando productores...</span>
                   </div>
                 </td>
               </tr>
             ) : productores.length === 0 ? (
-              <tr>                <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+              <tr>
+                {' '}
+                <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
                   No se encontraron elementos
                 </td>
               </tr>
@@ -194,19 +229,47 @@ function Productores() {
                       .map((email, index) => (
                         <div key={index}>{email}</div>
                       ))}
-                  </td>
+                  </td>{' '}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button 
-                      className="text-indigo-600 hover:text-indigo-900 mr-3"
-                    >
-                      Editar
-                    </button>
-                    <button 
-                      className="text-red-600 hover:text-red-900"
-                      onClick={() => handleDelete(productor.id)}
-                    >
-                      Eliminar
-                    </button>
+                    <div className="flex space-x-2">
+                      <button className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-md flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                        <span>Editar</span>
+                      </button>
+                      <button
+                        className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-md flex items-center"
+                        onClick={() => handleDelete(productor.id)}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                        <span>Eliminar</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -214,17 +277,22 @@ function Productores() {
           </tbody>
         </table>
       </div>
-      
+
       {/* Modal para agregar productor */}
       {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
           <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3 text-center">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">Agregar Nuevo Productor</h3>
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                Agregar Nuevo Productor
+              </h3>
               <div className="mt-2 px-7 py-3">
                 <form onSubmit={handleSubmit}>
                   <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="codigo">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2 text-left"
+                      htmlFor="codigo"
+                    >
                       Código
                     </label>
                     <input
@@ -238,7 +306,10 @@ function Productores() {
                     />
                   </div>
                   <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="nombre">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2 text-left"
+                      htmlFor="nombre"
+                    >
                       Nombre
                     </label>
                     <input
@@ -252,7 +323,10 @@ function Productores() {
                     />
                   </div>
                   <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="ubicacion">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2 text-left"
+                      htmlFor="ubicacion"
+                    >
                       Ubicación
                     </label>
                     <input
@@ -266,7 +340,10 @@ function Productores() {
                     />
                   </div>
                   <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="email1">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2 text-left"
+                      htmlFor="email1"
+                    >
                       Email 1
                     </label>
                     <input
@@ -279,7 +356,10 @@ function Productores() {
                     />
                   </div>
                   <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="email2">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2 text-left"
+                      htmlFor="email2"
+                    >
                       Email 2
                     </label>
                     <input
@@ -292,7 +372,10 @@ function Productores() {
                     />
                   </div>
                   <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="email3">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2 text-left"
+                      htmlFor="email3"
+                    >
                       Email 3
                     </label>
                     <input

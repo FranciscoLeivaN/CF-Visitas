@@ -22,16 +22,16 @@ export const hashPassword = async (password, salt) => {
   try {
     // Combinamos la contraseña con el salt
     const passwordWithSalt = password + salt;
-    
+
     // Configuración recomendada para Argon2id
     const hash = await argon2.hash(passwordWithSalt, {
       type: argon2.argon2id, // Variante más segura de Argon2
-      memoryCost: 65536,     // 64 MB en KiB
-      timeCost: 3,           // Número de iteraciones
-      parallelism: 4,        // Grado de paralelismo
-      hashLength: 32         // Longitud del hash resultante
+      memoryCost: 65536, // 64 MB en KiB
+      timeCost: 3, // Número de iteraciones
+      parallelism: 4, // Grado de paralelismo
+      hashLength: 32, // Longitud del hash resultante
     });
-    
+
     return hash;
   } catch (error) {
     console.error('Error al encriptar contraseña:', error);
@@ -50,7 +50,7 @@ export const verifyPassword = async (password, hash, salt) => {
   try {
     // Combinamos la contraseña con el salt
     const passwordWithSalt = password + salt;
-    
+
     // Verificamos si coincide con el hash almacenado
     return await argon2.verify(hash, passwordWithSalt);
   } catch (error) {
@@ -62,5 +62,5 @@ export const verifyPassword = async (password, hash, salt) => {
 export default {
   generateSalt,
   hashPassword,
-  verifyPassword
+  verifyPassword,
 };

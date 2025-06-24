@@ -1,5 +1,7 @@
-import authJwt from './authJwt.js';
+import authJwt, { verifyToken, checkRole } from './authJwt.js';
 
-export {
-  authJwt
+export { 
+  authJwt,
+  verifyToken,
+  checkRole
 };

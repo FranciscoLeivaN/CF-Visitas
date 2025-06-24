@@ -11,26 +11,26 @@ import Usuarios from './mantenedor/Usuarios';
 
 /**
  * Componente Home - Contenedor principal de la aplicación
- * 
+ *
  * Este componente es el punto de entrada principal de la aplicación después del login.
  * Utiliza un componente Layout común y carga diferentes vistas según la sección seleccionada.
- * 
+ *
  * @returns {JSX.Element} Componente de panel de administración
  */
 function Home() {
   // Estado para controlar qué sección del menú está activa
-  const [activeMenu, setActiveMenu] = useState('dashboard');  return (
+  const [activeMenu, setActiveMenu] = useState('dashboard');
+  return (
     <Layout activeMenu={activeMenu} setActiveMenu={setActiveMenu}>
-      {/* Contenido dinámico basado en la opción seleccionada */}      {activeMenu === 'dashboard' && <Dashboard setActiveMenu={setActiveMenu} />}
+      {/* Contenido dinámico basado en la opción seleccionada */}{' '}
+      {activeMenu === 'dashboard' && <Dashboard setActiveMenu={setActiveMenu} />}
       {activeMenu === 'visitas' && <Visitas />}
       {activeMenu === 'reportes' && <Reportes />}
-      
       {/* Secciones de Mantenedor */}
       {activeMenu === 'mantenedor-cultivos' && <Cultivos />}
       {activeMenu === 'mantenedor-inspectores' && <Inspectores />}
       {activeMenu === 'mantenedor-productores' && <Productores />}
       {activeMenu === 'mantenedor-usuarios' && <Usuarios />}
-      
       {activeMenu === 'configuracion' && (
         <div className="max-w-3xl mx-auto">
           <UserSettings />

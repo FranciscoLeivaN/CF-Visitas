@@ -11,17 +11,17 @@ import { getAuthToken, decodeAuthToken } from '../api';
 export const isAuthenticated = () => {
   const token = getAuthToken();
   if (!token) return false;
-  
+
   // Verifica que el token no esté expirado
   try {
     const decodedToken = decodeAuthToken();
     if (!decodedToken) return false;
-    
+
     // Obtiene el tiempo de expiración del token (en segundos desde epoch)
     const expirationTime = decodedToken.exp;
     // Obtiene el tiempo actual en segundos
     const currentTime = Math.floor(Date.now() / 1000);
-    
+
     // Si el tiempo actual es mayor que el tiempo de expiración, el token ha expirado
     return currentTime < expirationTime;
   } catch (error) {
@@ -36,14 +36,27 @@ export const isAuthenticated = () => {
  */
 export const getAuthUser = () => {
   if (!isAuthenticated()) return null;
-  
+
   try {
     const decodedToken = decodeAuthToken();
-    return {
+    
+    // Mostrar en consola para depuración
+    console.log('Token decodificado:', decodedToken);
+    
+    // Asegurarnos de que el rol esté presente
+    const userRole = decodedToken.role || 'normal';
+    
+    const userData = {
       id: decodedToken.id,
       name: decodedToken.name,
-      email: decodedToken.email
+      email: decodedToken.email,
+      role: userRole,
+      nombreRol: userRole
     };
+    
+    console.log('Datos de usuario extraídos del token:', userData);
+    
+    return userData;
   } catch (error) {
     console.error('Error al obtener datos del usuario:', error);
     return null;
