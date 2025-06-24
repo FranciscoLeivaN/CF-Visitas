@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getCultivos, deleteCultivo } from '../../api';
+import { getCultivos, deleteCultivo, createCultivo } from '../../api';
 
 /**
  * Componente de Mantenedor de Cultivos
@@ -15,6 +15,13 @@ function Cultivos() {
   const [loading, setLoading] = useState(true);
   // Estado para manejar errores
   const [error, setError] = useState(null);
+  // Estado para controlar la visibilidad del modal
+  const [showModal, setShowModal] = useState(false);
+  // Estado para el formulario
+  const [formData, setFormData] = useState({
+    nombre: '',
+    descripcion: ''
+  });
   
   // Cargar cultivos al montar el componente
   useEffect(() => {
@@ -52,6 +59,53 @@ function Cultivos() {
     }
   };
 
+  /**
+   * Maneja los cambios en los campos del formulario
+   * @param {Event} e - Evento del input
+   */
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  /**
+   * Abre el modal y resetea el formulario
+   */
+  const handleOpenModal = () => {
+    setFormData({
+      nombre: '',
+      descripcion: ''
+    });
+    setShowModal(true);
+  };
+
+  /**
+   * Cierra el modal
+   */
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  /**
+   * Maneja el envío del formulario para crear un nuevo cultivo
+   * @param {Event} e - Evento del formulario
+   */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const newCultivo = await createCultivo(formData);
+      setCultivos([...cultivos, newCultivo]);
+      setShowModal(false);
+      setError(null);
+    } catch (err) {
+      console.error('Error al crear cultivo:', err);
+      setError('Error al crear el cultivo. Por favor, inténtelo de nuevo.');
+    }
+  };
+
   return (
     <div className="bg-white shadow-md rounded-lg p-6">
       <h2 className="text-xl font-semibold mb-4">Mantenedor de Cultivos</h2>
@@ -70,6 +124,7 @@ function Cultivos() {
       <div className="flex justify-end mb-4">
         <button 
           className="bg-lightgreen hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          onClick={handleOpenModal}
         >
           Agregar Cultivo
         </button>
@@ -134,6 +189,64 @@ function Cultivos() {
           </tbody>
         </table>
       </div>
+      
+      {/* Modal para agregar cultivo */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+          <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Agregar Nuevo Cultivo</h3>
+              <div className="mt-2 px-7 py-3">
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="nombre">
+                      Nombre
+                    </label>
+                    <input
+                      type="text"
+                      id="nombre"
+                      name="nombre"
+                      value={formData.nombre}
+                      onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="descripcion">
+                      Descripción
+                    </label>
+                    <textarea
+                      id="descripcion"
+                      name="descripcion"
+                      value={formData.descripcion}
+                      onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      rows="3"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center justify-between mt-4 gap-4">
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="text-white bg-lightgreen hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

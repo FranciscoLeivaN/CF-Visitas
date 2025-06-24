@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, deleteUser } from '../../api';
+import { getUsers, deleteUser, createUser, getRoles } from '../../api';
 
 /**
  * Componente de Mantenedor de Usuarios
@@ -15,6 +15,18 @@ function Usuarios() {
   const [loading, setLoading] = useState(true);
   // Estado para manejar errores
   const [error, setError] = useState(null);
+  // Estado para controlar la visibilidad del modal
+  const [showModal, setShowModal] = useState(false);
+  // Estado para almacenar roles disponibles
+  const [roles, setRoles] = useState([]);
+  // Estado para el formulario
+  const [formData, setFormData] = useState({
+    nombreCompleto: '',
+    password: '',
+    telefono: '',
+    role_id: '',
+    activo: true
+  });
   
   // Cargar usuarios al montar el componente
   useEffect(() => {
@@ -35,6 +47,21 @@ function Usuarios() {
     fetchUsuarios();
   }, []);
   
+  // Cargar roles al montar el componente
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const data = await getRoles();
+        setRoles(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error al cargar roles:', err);
+        setError('Error al cargar los roles. Por favor, inténtelo de nuevo.');
+      }
+    };
+    
+    fetchRoles();
+  }, []);
+  
   /**
    * Maneja la eliminación de un usuario
    * @param {string} id - ID del usuario a eliminar
@@ -49,6 +76,56 @@ function Usuarios() {
         console.error('Error al eliminar usuario:', err);
         setError('Error al eliminar el usuario. Por favor, inténtelo de nuevo.');
       }
+    }
+  };
+
+  /**
+   * Maneja los cambios en los campos del formulario
+   * @param {Event} e - Evento del input
+   */
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  /**
+   * Abre el modal y resetea el formulario
+   */
+  const handleOpenModal = () => {
+    setFormData({
+      nombreCompleto: '',
+      password: '',
+      telefono: '',
+      role_id: roles.length > 0 ? roles[0].id : '',
+      activo: true
+    });
+    setShowModal(true);
+  };
+
+  /**
+   * Cierra el modal
+   */
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  /**
+   * Maneja el envío del formulario para crear un nuevo usuario
+   * @param {Event} e - Evento del formulario
+   */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const newUser = await createUser(formData);
+      setUsuarios([...usuarios, newUser]);
+      setShowModal(false);
+      setError(null);
+    } catch (err) {
+      console.error('Error al crear usuario:', err);
+      setError('Error al crear el usuario. Por favor, inténtelo de nuevo.');
     }
   };
 
@@ -70,6 +147,7 @@ function Usuarios() {
       <div className="flex justify-end mb-4">
         <button 
           className="bg-lightgreen hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          onClick={handleOpenModal}
         >
           Agregar Usuario
         </button>
@@ -150,6 +228,113 @@ function Usuarios() {
           </tbody>
         </table>
       </div>
+      
+      {/* Modal para agregar usuario */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+          <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Agregar Nuevo Usuario</h3>
+              <div className="mt-2 px-7 py-3">
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="nombreCompleto">
+                      Nombre Completo
+                    </label>
+                    <input
+                      type="text"
+                      id="nombreCompleto"
+                      name="nombreCompleto"
+                      value={formData.nombreCompleto}
+                      onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="password">
+                      Contraseña
+                    </label>
+                    <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="telefono">
+                      Teléfono
+                    </label>
+                    <input
+                      type="text"
+                      id="telefono"
+                      name="telefono"
+                      value={formData.telefono}
+                      onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="role_id">
+                      Rol
+                    </label>
+                    <select
+                      id="role_id"
+                      name="role_id"
+                      value={formData.role_id}
+                      onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      required
+                    >
+                      {roles.length === 0 ? (
+                        <option value="">Cargando roles...</option>
+                      ) : (
+                        roles.map(role => (
+                          <option key={role.id} value={role.id}>
+                            {role.nombre}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+                  <div className="mb-4 flex items-center">
+                    <input
+                      id="activo"
+                      type="checkbox"
+                      name="activo"
+                      checked={formData.activo}
+                      onChange={handleInputChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="activo" className="ml-2 block text-sm text-gray-900">
+                      Activo
+                    </label>
+                  </div>
+                  <div className="flex items-center justify-between mt-4 gap-4">
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="text-white bg-lightgreen hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

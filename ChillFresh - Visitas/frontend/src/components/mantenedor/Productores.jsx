@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProductores, deleteProductor } from '../../api';
+import { getProductores, deleteProductor, createProductor } from '../../api';
 
 /**
  * Componente de Mantenedor de Productores
@@ -15,6 +15,17 @@ function Productores() {
   const [loading, setLoading] = useState(true);
   // Estado para manejar errores
   const [error, setError] = useState(null);
+  // Estado para controlar la visibilidad del modal
+  const [showModal, setShowModal] = useState(false);
+  // Estado para el formulario
+  const [formData, setFormData] = useState({
+    codigo: '',
+    nombre: '',
+    ubicacion: '',
+    email1: '',
+    email2: '',
+    email3: ''
+  });
   
   // Cargar productores al montar el componente
   useEffect(() => {
@@ -52,6 +63,57 @@ function Productores() {
     }
   };
 
+  /**
+   * Maneja los cambios en los campos del formulario
+   * @param {Event} e - Evento del input
+   */
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  /**
+   * Abre el modal y resetea el formulario
+   */
+  const handleOpenModal = () => {
+    setFormData({
+      codigo: '',
+      nombre: '',
+      ubicacion: '',
+      email1: '',
+      email2: '',
+      email3: ''
+    });
+    setShowModal(true);
+  };
+
+  /**
+   * Cierra el modal
+   */
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  /**
+   * Maneja el envío del formulario para crear un nuevo productor
+   * @param {Event} e - Evento del formulario
+   */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const newProductor = await createProductor(formData);
+      setProductores([...productores, newProductor]);
+      setShowModal(false);
+      setError(null);
+    } catch (err) {
+      console.error('Error al crear productor:', err);
+      setError('Error al crear el productor. Por favor, inténtelo de nuevo.');
+    }
+  };
+
   return (
     <div className="bg-white shadow-md rounded-lg p-6">
       <h2 className="text-xl font-semibold mb-4">Mantenedor de Productores</h2>
@@ -70,6 +132,7 @@ function Productores() {
       <div className="flex justify-end mb-4">
         <button 
           className="bg-lightgreen hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          onClick={handleOpenModal}
         >
           Agregar Productor
         </button>
@@ -80,13 +143,13 @@ function Productores() {
         <table className="min-w-full divide-y divide-gray-200">          <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Código
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Nombre
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                RUT
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Dirección
+                Ubicación
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Contacto
@@ -114,18 +177,23 @@ function Productores() {
                 </td>
               </tr>
             ) : (
-              productores.map(productor => (                <tr key={productor.id}>
+              productores.map(productor => (
+                <tr key={productor.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {productor.codigo}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {productor.nombre}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {productor.rut}
+                    {productor.ubicacion}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {productor.direccion}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {productor.email || productor.telefono}
+                  <td className="px-6 py-4 whitespace-normal text-sm text-gray-900">
+                    {[productor.email1, productor.email2, productor.email3]
+                      .filter(Boolean)
+                      .map((email, index) => (
+                        <div key={index}>{email}</div>
+                      ))}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
@@ -146,6 +214,117 @@ function Productores() {
           </tbody>
         </table>
       </div>
+      
+      {/* Modal para agregar productor */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+          <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Agregar Nuevo Productor</h3>
+              <div className="mt-2 px-7 py-3">
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="codigo">
+                      Código
+                    </label>
+                    <input
+                      type="text"
+                      id="codigo"
+                      name="codigo"
+                      value={formData.codigo}
+                      onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="nombre">
+                      Nombre
+                    </label>
+                    <input
+                      type="text"
+                      id="nombre"
+                      name="nombre"
+                      value={formData.nombre}
+                      onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="ubicacion">
+                      Ubicación
+                    </label>
+                    <input
+                      type="text"
+                      id="ubicacion"
+                      name="ubicacion"
+                      value={formData.ubicacion}
+                      onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="email1">
+                      Email 1
+                    </label>
+                    <input
+                      type="email"
+                      id="email1"
+                      name="email1"
+                      value={formData.email1}
+                      onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="email2">
+                      Email 2
+                    </label>
+                    <input
+                      type="email"
+                      id="email2"
+                      name="email2"
+                      value={formData.email2}
+                      onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2 text-left" htmlFor="email3">
+                      Email 3
+                    </label>
+                    <input
+                      type="email"
+                      id="email3"
+                      name="email3"
+                      value={formData.email3}
+                      onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between mt-4 gap-4">
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="text-white bg-lightgreen hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
